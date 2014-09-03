@@ -19,3 +19,10 @@
 *.exe
 *.out
 *.app
+
+# Project Files
+.project
+.cproject
+Debug/aasm
+Debug/src/*
+/Debug/
