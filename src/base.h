@@ -15,28 +15,44 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * 
- * File: asm.cpp
+ * File: base.h
  * Description: 
  * Author: Lovro Kalinovcic
  * 
  */
 
+#ifndef BASE_H_
+#define BASE_H_
+
+#include <cstdlib>
+#include <cstdio>
+#include <stdint.h>
+
+#include <iostream>
 #include <fstream>
-#include "base.h"
 
-int main()
-{
-    std::ifstream in;
-    std::ofstream out;
+#include <map>
 
-    in.open("../aspelc/test.aml", std::ios::in);
-    out.open("../aspelc/test.aby", std::ios::out | std::ios::binary);
+#include "translate.h"
 
-    init(&in, &out);
-    run();
+typedef uint32_t u32;
 
-    in.close();
-    out.close();
+void error(std::string msg);
 
-    return EXIT_SUCCESS;
-}
+u32 nextFunctionID();
+u32 nextGlobalvarID();
+u32 nextLocalvarID();
+
+bool nextToken();
+std::string nextTokenEOF();
+
+void nativeFunction(std::string name, bool isVoid);
+void aspelFunction(std::string name);
+void function();
+
+void globalvar();
+
+void init(std::ifstream* in, std::ofstream* out);
+void run();
+
+#endif /* BASE_H_ */

@@ -15,28 +15,15 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * 
- * File: asm.cpp
+ * File: translate.h
  * Description: 
  * Author: Lovro Kalinovcic
  * 
  */
 
-#include <fstream>
-#include "base.h"
+#ifndef TRANSLATE_H_
+#define TRANSLATE_H_
 
-int main()
-{
-    std::ifstream in;
-    std::ofstream out;
+void translate();
 
-    in.open("../aspelc/test.aml", std::ios::in);
-    out.open("../aspelc/test.aby", std::ios::out | std::ios::binary);
-
-    init(&in, &out);
-    run();
-
-    in.close();
-    out.close();
-
-    return EXIT_SUCCESS;
-}
+#endif /* TRANSLATE_H_ */
