@@ -54,12 +54,12 @@ void error(std::string msg)
 
 void write(void* ptr, size_t size)
 {
-    out->write((char*) ptr, 1);
+    out->write(reinterpret_cast<const char *>(ptr), size);
 }
 
 void writeByte(byte b)
 {
-    out->write((char*) (&b), 1);
+    out->write(reinterpret_cast<const char *>(&b), 1);
 }
 
 u16 nextFunctionID()
@@ -179,6 +179,7 @@ void function()
 void globalvar()
 {
     std::string name = nextTokenEOF();
+    globalvarIDFor(name, true);
 
     std::cout << "seeked globalvar " << name << "\n";
 }
