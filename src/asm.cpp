@@ -31,12 +31,20 @@ int main()
 
     in.open("../aspelc/test.aml", std::ios::in);
     out.open("../aspelc/test.aby", std::ios::out | std::ios::binary);
-
     init(&in, &out);
-    run();
-
+    seek();
     in.close();
     out.close();
+
+    in.open("../aspelc/test.aml", std::ios::in);
+    out.open("../aspelc/test.aby", std::ios::out | std::ios::binary);
+    init(&in, &out);
+    write();
+    in.close();
+    out.close();
+
+
+    std::cout << "assembler finished\n";
 
     return EXIT_SUCCESS;
 }

@@ -29,9 +29,6 @@
 #include <vector>
 #include <map>
 
-typedef uint8_t u8;
-typedef uint64_t u64;
-
 #define NOP_CODE        0x00
 
 #define PUSHB_CODE      0x10
@@ -76,10 +73,11 @@ typedef uint64_t u64;
 struct FunctionData
 {
     std::streampos inpos;
-    std::map<std::string, u64> labels;
+    std::map<std::string, u32> labels;
+    u32 size;
 };
 
-static u64 pc;
+static u32 pc;
 static std::map<std::string, FunctionData> functions;
 
 static bool isBoolean(std::string s)
@@ -107,7 +105,7 @@ static bool isFloat(std::string s)
     return true;
 }
 
-static u64 getLabelPC(std::string functionName, std::string labelName)
+static u32 getLabelPC(std::string functionName, std::string labelName)
 {
     FunctionData fdat = functions[functionName];
     if(fdat.labels.find(labelName) == fdat.labels.end())
@@ -199,6 +197,11 @@ static void translate(std::string name)
     error("unrecognized mnemonic \"" + token + "\"");
 }
 
+u32 getFunctionSize(std::string name)
+{
+    return functions[name].size;
+}
+
 void seekFunction(std::string name)
 {
     pc = 0;
@@ -210,6 +213,8 @@ void seekFunction(std::string name)
         if(nextTokenEOF() == ".") break;
         addPC(name);
     }
+
+    functions[name].size = pc;
 }
 
 void translateFunction(std::string name)

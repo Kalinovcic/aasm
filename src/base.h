@@ -31,23 +31,24 @@
 #include <iostream>
 #include <fstream>
 
+#include <algorithm>
+#include <vector>
 #include <map>
 
-#include "translate.h"
-
+typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
+typedef uint64_t u64;
+
 typedef uint8_t byte;
+
+#include "translate.h"
 
 std::ifstream* getInputStream();
 void error(std::string msg);
 
 void write(void* ptr, size_t size);
 void writeByte(byte b);
-
-u16 nextFunctionID();
-u16 nextGlobalvarID();
-u16 nextLocalvarID();
 
 u16 functionIDFor(std::string name, bool create);
 u16 globalvarIDFor(std::string name, bool create);
@@ -57,13 +58,8 @@ std::string getToken();
 bool nextToken();
 std::string nextTokenEOF();
 
-void nativeFunction(std::string name, bool isVoid);
-void aspelFunction(std::string name);
-void function();
-
-void globalvar();
-
 void init(std::ifstream* in, std::ofstream* out);
-void run();
+void seek();
+void write();
 
 #endif /* BASE_H_ */

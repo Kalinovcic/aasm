@@ -23,10 +23,14 @@
 
 #include "base.h"
 
+typedef std::map<std::string, u32>::iterator idmap_it;
+
 static std::ifstream* in;
 static std::ofstream* out;
 
 static std::string token;
+
+static u32 filepos = 0;
 
 static u16 functionIDCounter = 0;
 static u16 globalvarIDCounter = 0;
@@ -34,6 +38,8 @@ static u16 localvarIDCounter = 0;
 static std::map<std::string, u32> functionIDs;
 static std::map<std::string, u32> globalvarIDs;
 static std::map<std::string, u32> localvarIDs;
+
+static std::vector<std::string> nativeFunctions;
 
 std::ifstream* getInputStream()
 {
@@ -75,6 +81,11 @@ u16 nextLocalvarID()
     localvarIDCounter++;
     if(localvarIDCounter == 0) error("var ID overflow");
     return localvarIDCounter - 1;
+}
+
+bool isNative(std::string name)
+{
+    return std::find(nativeFunctions.begin(), nativeFunctions.end(), name) != nativeFunctions.end();
 }
 
 u16 functionIDFor(std::string name, bool create)
@@ -127,7 +138,10 @@ std::string nextTokenEOF()
 
 void nativeFunction(std::string name, bool isVoid)
 {
-    std::cout << "loaded native " << name << "\n";
+    if(isNative(name)) error("duplicate native \"" + name + "\"\n");
+    else nativeFunctions.push_back(name);
+
+    std::cout << "seeked native " << name << "\n";
 }
 
 void aspelFunction(std::string name)
@@ -137,7 +151,7 @@ void aspelFunction(std::string name)
 
     seekFunction(name);
 
-    std::cout << "loaded aspfun " << name << "\n";
+    std::cout << "seeked aspel function " << name << "\n";
 }
 
 void function()
@@ -154,6 +168,10 @@ void function()
 
     std::string name = nextTokenEOF();
 
+    if(functionIDs.find(name) == functionIDs.end())
+        functionIDs[name] = nextFunctionID();
+    else error("function \"" + name + "\" redeclared");
+
     if(isNative) nativeFunction(name, isVoid);
     else aspelFunction(name);
 }
@@ -162,7 +180,84 @@ void globalvar()
 {
     std::string name = nextTokenEOF();
 
-    std::cout << "loaded globalvar " << name << "\n";
+    std::cout << "seeked globalvar " << name << "\n";
+}
+
+void writeHeader()
+{
+    std::cout << "writing header\n";
+
+    writeByte('A');
+    writeByte('B');
+    writeByte('Y');
+    writeByte(27);
+
+    filepos += 4;
+}
+
+void writeNativeData()
+{
+    std::cout << "writing native data\n";
+
+    u16 nativecount = nativeFunctions.size();
+    write(&nativecount, 2);
+
+    filepos += 2;
+
+    for(std::vector<std::string>::iterator i = nativeFunctions.begin(); i != nativeFunctions.end(); i++)
+    {
+        std::string name = *i;
+        std::cout << "writing native function \"" << name << "\"\n";
+
+        for(unsigned int i = 0; i < name.size(); i++)
+            writeByte(name[i]);
+        writeByte(0x00);
+
+        u16 id = functionIDFor(name, false);
+        write(&id, 2);
+
+        filepos += name.size() + 3;
+    }
+}
+
+void writeGlobalvarData()
+{
+    std::cout << "writing globalvar data\n";
+
+    u16 globalvarc = globalvarIDs.size();
+    write(&globalvarc, 2);
+
+    filepos += 2;
+}
+
+void writeFunctionData()
+{
+    std::cout << "writing function data\n";
+
+    u16 functionc = functionIDs.size();
+    write(&functionc, 2);
+
+    filepos += 2 + (functionc - nativeFunctions.size())* 6;
+
+    for(idmap_it i = functionIDs.begin(); i != functionIDs.end(); i++)
+        if(!isNative(i->first))
+        {
+            u16 id = i->second;
+
+            write(&id, 2);
+            write(&filepos, 4);
+            filepos += getFunctionSize(i->first);
+        }
+}
+
+void writeFunctions()
+{
+    for(idmap_it i = functionIDs.begin(); i != functionIDs.end(); i++)
+        if(!isNative(i->first))
+        {
+            std::cout << "writing function \"" << i->first << "\"\n";
+            translateFunction(i->first);
+        }
 }
 
 void init(std::ifstream* _in, std::ofstream* _out)
@@ -171,8 +266,9 @@ void init(std::ifstream* _in, std::ofstream* _out)
     out = _out;
 }
 
-void run()
+void seek()
 {
+    std::cout << "seeking...\n";
     while(nextToken())
     {
         if(token.size() < 2 || token[1] != ':')
@@ -183,4 +279,15 @@ void run()
         case 'w': globalvar(); break;
         }
     }
+}
+
+void write()
+{
+    std::cout << "writing...\n";
+
+    writeHeader();
+    writeNativeData();
+    writeGlobalvarData();
+    writeFunctionData();
+    writeFunctions();
 }

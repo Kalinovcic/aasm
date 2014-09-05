@@ -26,6 +26,7 @@
 
 #include "base.h"
 
+u32 getFunctionSize(std::string name);
 void seekFunction(std::string name);
 void translateFunction(std::string name);
 
