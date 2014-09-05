@@ -24,6 +24,9 @@
 #ifndef TRANSLATE_H_
 #define TRANSLATE_H_
 
-void translate();
+#include "base.h"
+
+void seekFunction(std::string name);
+void translateFunction(std::string name);
 
 #endif /* TRANSLATE_H_ */

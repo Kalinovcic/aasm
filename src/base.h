@@ -35,14 +35,25 @@
 
 #include "translate.h"
 
+typedef uint16_t u16;
 typedef uint32_t u32;
+typedef uint8_t byte;
 
+std::ifstream* getInputStream();
 void error(std::string msg);
 
-u32 nextFunctionID();
-u32 nextGlobalvarID();
-u32 nextLocalvarID();
+void write(void* ptr, size_t size);
+void writeByte(byte b);
 
+u16 nextFunctionID();
+u16 nextGlobalvarID();
+u16 nextLocalvarID();
+
+u16 functionIDFor(std::string name, bool create);
+u16 globalvarIDFor(std::string name, bool create);
+u16 localvarIDFor(std::string name, bool create);
+
+std::string getToken();
 bool nextToken();
 std::string nextTokenEOF();
 

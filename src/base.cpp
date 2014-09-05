@@ -23,17 +23,22 @@
 
 #include "base.h"
 
-std::ifstream* in;
-std::ofstream* out;
+static std::ifstream* in;
+static std::ofstream* out;
 
-std::string token;
+static std::string token;
 
-u32 functionIDCounter = 0;
-u32 globalvarIDCounter = 0;
-u32 localvarIDCounter = 0;
-std::map<std::string, u32> functionIDs;
-std::map<std::string, u32> globalvarIDs;
-std::map<std::string, u32> localvarIDs;
+static u16 functionIDCounter = 0;
+static u16 globalvarIDCounter = 0;
+static u16 localvarIDCounter = 0;
+static std::map<std::string, u32> functionIDs;
+static std::map<std::string, u32> globalvarIDs;
+static std::map<std::string, u32> localvarIDs;
+
+std::ifstream* getInputStream()
+{
+    return in;
+}
 
 void error(std::string msg)
 {
@@ -41,25 +46,71 @@ void error(std::string msg)
     exit(1);
 }
 
-u32 nextFunctionID()
+void write(void* ptr, size_t size)
+{
+    out->write((char*) ptr, 1);
+}
+
+void writeByte(byte b)
+{
+    out->write((char*) (&b), 1);
+}
+
+u16 nextFunctionID()
 {
     functionIDCounter++;
     if(functionIDCounter == 0) error("function ID overflow");
     return functionIDCounter - 1;
 }
 
-u32 nextGlobalvarID()
+u16 nextGlobalvarID()
 {
     globalvarIDCounter++;
     if(globalvarIDCounter == 0) error("globalvar ID overflow");
     return globalvarIDCounter - 1;
 }
 
-u32 nextLocalvarID()
+u16 nextLocalvarID()
 {
     localvarIDCounter++;
     if(localvarIDCounter == 0) error("var ID overflow");
     return localvarIDCounter - 1;
+}
+
+u16 functionIDFor(std::string name, bool create)
+{
+    if(functionIDs.find(name) == functionIDs.end())
+    {
+        if(create) functionIDs[name] = nextFunctionID();
+        else error("function \"" + name + "\" not found");
+    }
+
+    return functionIDs[name];
+}
+
+u16 globalvarIDFor(std::string name, bool create)
+{
+    if(globalvarIDs.find(name) == globalvarIDs.end())
+    {
+        if(create) globalvarIDs[name] = nextFunctionID();
+        else error("globalvar \"" + name + "\" not found");
+    }
+    return globalvarIDs[name];
+}
+
+u16 localvarIDFor(std::string name, bool create)
+{
+    if(localvarIDs.find(name) == localvarIDs.end())
+    {
+        if(create) localvarIDs[name] = nextFunctionID();
+        else error("var \"" + name + "\" not found");
+    }
+    return localvarIDs[name];
+}
+
+std::string getToken()
+{
+    return token;
 }
 
 bool nextToken()
@@ -84,11 +135,7 @@ void aspelFunction(std::string name)
     localvarIDCounter = 0;
     localvarIDs.clear();
 
-    while(true)
-    {
-        if(nextTokenEOF() == ".") break;
-        translate();
-    }
+    seekFunction(name);
 
     std::cout << "loaded aspfun " << name << "\n";
 }
