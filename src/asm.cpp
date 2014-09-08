@@ -21,30 +21,40 @@
  * 
  */
 
+#include <iostream>
+#include <cstdlib>
 #include <fstream>
-#include "base.h"
 
-int main()
+#include "translator.h"
+#include "a10/translator.h"
+
+#include "scanner.h"
+#include "a10/scanner.h"
+
+int main(int argc, char** argv)
 {
-    std::ifstream in;
-    std::ofstream out;
+    std::ifstream* in = new std::ifstream();
+    std::ofstream* out = new std::ofstream();
 
-    in.open("../aspelc/test.aml", std::ios::in);
-    out.open("../aspelc/test.aby", std::ios::out | std::ios::binary);
-    init(&in, &out);
-    seek();
-    in.close();
-    out.close();
+    Log* log = new Log();
+    log->setStream(&std::cout, Log::INFO);
+    log->setStream(&std::cout, Log::WARNING);
+    log->setStream(&std::cerr, Log::ERROR);
 
-    in.open("../aspelc/test.aml", std::ios::in);
-    out.open("../aspelc/test.aby", std::ios::out | std::ios::binary);
-    init(&in, &out);
-    write();
-    in.close();
-    out.close();
+    Scanner* scanner = new ScannerA10(log, in);
+    Translator* translator = new TranslatorA10(log, scanner, out);
 
+    in->open("../aspelc/test.aml", std::ios::in);
+    out->open("../aspelc/test.aby", std::ios::out | std::ios::binary);
+    translator->labelPass();
+    in->close();
+    out->close();
 
-    std::cout << "assembler finished\n";
+    in->open("../aspelc/test.aml", std::ios::in);
+    out->open("../aspelc/test.aby", std::ios::out | std::ios::binary);
+    translator->translationPass();
+    in->close();
+    out->close();
 
     return EXIT_SUCCESS;
 }

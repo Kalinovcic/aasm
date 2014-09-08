@@ -15,19 +15,32 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * 
- * File: translate.h
+ * File: translator.h
  * Description: 
  * Author: Lovro Kalinovcic
  * 
  */
 
-#ifndef TRANSLATE_H_
-#define TRANSLATE_H_
+#ifndef TRANSLATOR_H_
+#define TRANSLATOR_H_
 
-#include "base.h"
+#include <ostream>
 
-u32 getFunctionSize(std::string name);
-void seekFunction(std::string name);
-void translateFunction(std::string name);
+#include "scanner.h"
 
-#endif /* TRANSLATE_H_ */
+class Translator
+{
+public:
+    Translator(Log* log, Scanner* scanner, std::ostream* out)
+    : m_log(log), m_scanner(scanner), m_out(out) {}
+    virtual ~Translator() {}
+
+    virtual void labelPass() {}
+    virtual void translationPass() {}
+protected:
+    Log* m_log;
+    Scanner* m_scanner;
+    std::ostream* m_out;
+};
+
+#endif /* TRANSLATOR_H_ */

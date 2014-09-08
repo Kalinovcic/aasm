@@ -15,51 +15,38 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * 
- * File: base.h
+ * File: scanner.h
  * Description: 
  * Author: Lovro Kalinovcic
  * 
  */
 
-#ifndef BASE_H_
-#define BASE_H_
+#ifndef SCANNER_A10_H_
+#define SCANNER_A10_H_
 
-#include <cstdlib>
-#include <cstdio>
-#include <stdint.h>
+#include <string>
+#include <istream>
 
-#include <iostream>
-#include <fstream>
+#include "../scanner.h"
 
-#include <algorithm>
-#include <vector>
-#include <map>
+class ScannerA10: public Scanner
+{
+public:
+    ScannerA10(Log* log, std::istream* in): Scanner(log, in) {}
+    ~ScannerA10() {}
 
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
+    std::string getToken()
+    {
+        return m_token;
+    }
 
-typedef uint8_t byte;
+    bool nextToken()
+    {
+        *m_in >> m_token;
+        return !m_in->eof();
+    }
+private:
+    std::string m_token;
+};
 
-#include "translate.h"
-
-std::ifstream* getInputStream();
-void error(std::string msg);
-
-void write(void* ptr, size_t size);
-void writeByte(byte b);
-
-u16 functionIDFor(std::string name, bool create);
-u16 globalvarIDFor(std::string name, bool create);
-u16 localvarIDFor(std::string name, bool create);
-
-std::string getToken();
-bool nextToken();
-std::string nextTokenEOF();
-
-void init(std::ifstream* in, std::ofstream* out);
-void seek();
-void write();
-
-#endif /* BASE_H_ */
+#endif /* SCANNER_A10_H_ */
