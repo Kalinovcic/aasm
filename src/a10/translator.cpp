@@ -30,8 +30,6 @@ void TranslatorA10::nativeFunction(std::string name, bool isVoid)
     if(isNative(name))
         m_log->abort("duplicate native \"" + name + "\"");
     m_nativeFunctions.push_back(name);
-
-    m_log->info("found native \"" + name + "\"");
 }
 
 void TranslatorA10::aspelFunction(std::string name)
@@ -40,8 +38,6 @@ void TranslatorA10::aspelFunction(std::string name)
     m_localvarIDs.clear();
 
     passFunction(name);
-
-    m_log->info("found aspel function \"" + name + "\"");
 }
 
 void TranslatorA10::function()
@@ -74,26 +70,23 @@ void TranslatorA10::globalvar()
     m_scanner->nextTokenEOF();
     std::string name = m_scanner->getToken();
     globalvarIDFor(name, true);
-
-    m_log->info("found globalvar \"" + name + "\"");
 }
 
 void TranslatorA10::writeHeader()
 {
-    m_log->info("writing header");
-
     writeByte('A');
     writeByte('B');
     writeByte('Y');
     writeByte(27);
+
+    u16 version = 0;
+    write(&version, 2);
 
     m_filepos += 4;
 }
 
 void TranslatorA10::writeNativeData()
 {
-    m_log->info("writing native data");
-
     u16 nativecount = m_nativeFunctions.size();
     write(&nativecount, 2);
 
@@ -102,7 +95,6 @@ void TranslatorA10::writeNativeData()
     for(std::vector<std::string>::iterator i = m_nativeFunctions.begin(); i != m_nativeFunctions.end(); i++)
     {
         std::string name = *i;
-        m_log->info("writing native function \"" + name + "\"");
 
         for(unsigned int i = 0; i < name.size(); i++)
             writeByte(name[i]);
@@ -117,8 +109,6 @@ void TranslatorA10::writeNativeData()
 
 void TranslatorA10::writeGlobalvarData()
 {
-    m_log->info("writing globalvar data");
-
     u16 globalvarc = m_globalvarIDs.size();
     write(&globalvarc, 2);
 
@@ -127,8 +117,6 @@ void TranslatorA10::writeGlobalvarData()
 
 void TranslatorA10::writeFunctionData()
 {
-    m_log->info("writing function data");
-
     u16 functionc = m_functionIDs.size();
     write(&functionc, 2);
 
@@ -149,15 +137,11 @@ void TranslatorA10::writeFunctions()
 {
     for(std::map<std::string, u32>::iterator i = m_functionIDs.begin(); i != m_functionIDs.end(); i++)
         if(!isNative(i->first))
-        {
-            m_log->info("writing function \"" + i->first + "\"");
             writeFunction(i->first);
-        }
 }
 
 void TranslatorA10::labelPass()
 {
-    m_log->info("label pass:");
     while(m_scanner->nextToken())
     {
         std::string token = m_scanner->getToken();
@@ -174,8 +158,6 @@ void TranslatorA10::labelPass()
 
 void TranslatorA10::translationPass()
 {
-    m_log->info("translation pass:");
-
     writeHeader();
     writeNativeData();
     writeGlobalvarData();
