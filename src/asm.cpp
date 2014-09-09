@@ -84,12 +84,12 @@ std::string nextArgument(Log* log, int* index, int argc, char** argv)
     return std::string(argv[*index]);
 }
 
-std::string genOutputPath(std::string sourcePath)
+std::string genOutputPath(Log* log, std::string sourcePath)
 {
     int extensionSize = 4;
     if(!endsWith(sourcePath, ".aml"))
     {
-        std::cout << "warning: deprecated file extension for \"" << sourcePath << "\"\n";
+        log->warning("deprecated file extension for \"" + sourcePath + "\"");
         extensionSize = 0;
         for(int i = sourcePath.length() - 1; i >= 0; i--)
             if(sourcePath[i] == '.')
@@ -99,7 +99,10 @@ std::string genOutputPath(std::string sourcePath)
             }
     }
 
-    return sourcePath.substr(0, sourcePath.length() - extensionSize).append(".aby");
+    std::string outputPath = sourcePath.substr(0, sourcePath.length() - extensionSize).append(".aby");
+    if(outputPath == sourcePath)
+        log->abort("couldn't generate output path [paths equal]");
+    return outputPath;
 }
 
 void displayVersion()
@@ -192,7 +195,7 @@ int main(int argc, char** argv)
         else
         {
             std::string usedOutputPath = outputPath;
-            if(outputPath == "") usedOutputPath = genOutputPath(arg);
+            if(outputPath == "") usedOutputPath = genOutputPath(log, arg);
             outputPath = "";
 
             AssemblerJob job(arg, usedOutputPath, amlStandard);
