@@ -208,6 +208,12 @@ int main(int argc, char** argv)
         AssemblerJob job = jobs[jobi];
         log->log("job: " + job.toString(), Log::INFO);
 
+        if(job.source == job.output)
+        {
+            log->log(" - failed\n", Log::INFO);
+            log->abort("source and output paths can not be equal");
+        }
+
         std::ifstream in;
         std::ofstream out;
 
