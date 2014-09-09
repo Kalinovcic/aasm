@@ -30,6 +30,7 @@ void TranslatorA10::nativeFunction(std::string name, bool isVoid)
     if(isNative(name))
         m_log->abort("duplicate native \"" + name + "\"");
     m_nativeFunctions.push_back(name);
+    m_voidNatives.push_back(name);
 }
 
 void TranslatorA10::aspelFunction(std::string name)
@@ -102,8 +103,9 @@ void TranslatorA10::writeNativeData()
 
         u16 id = functionIDFor(name, false);
         write(&id, 2);
+        writeByte(isVoid(name) ? 1 : 0);
 
-        m_filepos += name.size() + 3;
+        m_filepos += name.size() + 4;
     }
 }
 

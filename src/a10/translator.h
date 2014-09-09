@@ -67,6 +67,7 @@ private:
 
     std::map<std::string, FunctionData> m_functions;
     std::vector<std::string> m_nativeFunctions;
+    std::vector<std::string> m_voidNatives;
 
     inline void write(void* ptr, size_t size) { m_out->write(reinterpret_cast<const char*>(ptr), size); }
     inline void writeByte(u8 byte) { m_out->write(reinterpret_cast<const char*>(&byte), 1); }
@@ -95,6 +96,11 @@ private:
     inline bool isNative(std::string name)
     {
         return std::find(m_nativeFunctions.begin(), m_nativeFunctions.end(), name) != m_nativeFunctions.end();
+    }
+
+    inline bool isVoid(std::string name)
+    {
+        return std::find(m_voidNatives.begin(), m_voidNatives.end(), name) != m_voidNatives.end();
     }
 
     inline u16 functionIDFor(std::string name, bool create)
