@@ -149,7 +149,7 @@ void TranslatorA11::writeFunction(std::string name)
             m_scanner->nextTokenEOF();
             std::string strval = m_scanner->getToken();
             if(isBoolean(strval)) { writeByte(PUSHB_CODE); writeByte(strval == "true" ? 0x01 : 0x00); continue; }
-            if(isInteger(strval)) { writeByte(PUSHL_CODE); long value = std::atol(strval.c_str()); write(&value, 8); continue; }
+            if(isInteger(strval)) { writeByte(PUSHL_CODE); long long value = std::atoll(strval.c_str()); write(&value, 8); continue; }
             if(isFloat(strval)) { writeByte(PUSHD_CODE); double value = std::atof(strval.c_str()); write(&value, 8); continue; }
             m_log->abort("unknown push type");
         }
