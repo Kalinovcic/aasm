@@ -25,35 +25,10 @@
 
 #include <iostream>
 
-void TranslatorA11::nativeFunction(std::string name, bool isVoid)
-{
-    if(isNative(name))
-        m_log->abort("duplicate native \"" + name + "\"");
-    m_nativeFunctions.push_back(name);
-    m_voidNatives.push_back(name);
-}
-
-void TranslatorA11::aspelFunction(std::string name)
-{
-    m_localvarIDCounter = 0;
-    m_localvarIDs.clear();
-
-    passFunction(name);
-}
-
 void TranslatorA11::function()
 {
-    std::string token = m_scanner->getToken();
-
-    if(token.size() > 4) m_log->abort("invalid function def \"" + token + "\"");
-
-    bool isNative = false, isVoid = false;
-    for(unsigned int i = 2; i < token.size(); i++)
-        switch(token[i])
-        {
-        case 'n': if(isNative) m_log->abort("invalid function def \"" + token + "\""); isNative = true; break;
-        case 'v': if(isVoid) m_log->abort("invalid function def \"" + token + "\""); isVoid = true; break;
-        }
+    if(m_scanner->getToken().size() > 2)
+        m_log->abort("invalid function def \"" + m_scanner->getToken() + "\"");
 
     m_scanner->nextTokenEOF();
     std::string name = m_scanner->getToken();
@@ -62,8 +37,25 @@ void TranslatorA11::function()
         m_functionIDs[name] = nextFunctionID();
     else m_log->abort("function \"" + name + "\" redeclared");
 
-    if(isNative) nativeFunction(name, isVoid);
-    else aspelFunction(name);
+    m_localvarIDCounter = 0;
+    m_localvarIDs.clear();
+
+    passFunction(name);
+}
+
+void TranslatorA11::native()
+{
+    if(m_scanner->getToken().size() > 2)
+        m_log->abort("invalid native def \"" + m_scanner->getToken() + "\"");
+
+    m_scanner->nextTokenEOF();
+    std::string name = m_scanner->getToken();
+
+    if(m_functionIDs.find(name) == m_functionIDs.end())
+        m_functionIDs[name] = nextFunctionID();
+    else m_log->abort("native \"" + name + "\" redeclared");
+
+    m_nativeFunctions.push_back(name);
 }
 
 void TranslatorA11::globalvar()
@@ -103,7 +95,6 @@ void TranslatorA11::writeNativeData()
 
         u16 id = functionIDFor(name, false);
         write(&id, 2);
-        writeByte(isVoid(name) ? 1 : 0);
 
         m_filepos += name.size() + 4;
     }
@@ -153,6 +144,7 @@ void TranslatorA11::labelPass()
         switch(token[0])
         {
         case 'f': function(); break;
+        case 'n': native(); break;
         case 'w': globalvar(); break;
         }
     }

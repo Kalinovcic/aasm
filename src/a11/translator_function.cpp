@@ -26,8 +26,8 @@
 #define NOP_CODE        0x00
 
 #define PUSHB_CODE      0x10
-#define PUSHI_CODE      0x11
-#define PUSHF_CODE      0x12
+#define PUSHL_CODE      0x11
+#define PUSHD_CODE      0x12
 
 #define LOAD_CODE       0x18
 #define LOADWIDE_CODE   0x19
@@ -63,6 +63,11 @@
 #define GOTO_CODE       0x52
 #define CALL_CODE       0x53
 #define RETURN_CODE     0x54
+
+#define CTI_CODE        0x60
+#define CTF_CODE        0x61
+#define CTL_CODE        0x62
+#define CTD_CODE        0x63
 
 void TranslatorA11::passFunction(std::string name)
 {
@@ -144,8 +149,8 @@ void TranslatorA11::writeFunction(std::string name)
             m_scanner->nextTokenEOF();
             std::string strval = m_scanner->getToken();
             if(isBoolean(strval)) { writeByte(PUSHB_CODE); writeByte(strval == "true" ? 0x01 : 0x00); continue; }
-            if(isInteger(strval)) { writeByte(PUSHI_CODE); long value = std::atol(strval.c_str()); write(&value, 8); continue; }
-            if(isFloat(strval)) { writeByte(PUSHF_CODE); double value = std::atof(strval.c_str()); write(&value, 8); continue; }
+            if(isInteger(strval)) { writeByte(PUSHL_CODE); long value = std::atol(strval.c_str()); write(&value, 8); continue; }
+            if(isFloat(strval)) { writeByte(PUSHD_CODE); double value = std::atof(strval.c_str()); write(&value, 8); continue; }
             m_log->abort("unknown push type");
         }
         if(token == "load")
@@ -235,6 +240,10 @@ void TranslatorA11::writeFunction(std::string name)
             continue;
         }
         if(token == "return") { writeByte(RETURN_CODE); continue; }
+        if(token == "cti") { writeByte(CTI_CODE); continue; }
+        if(token == "ctf") { writeByte(CTF_CODE); continue; }
+        if(token == "ctl") { writeByte(CTL_CODE); continue; }
+        if(token == "ctd") { writeByte(CTD_CODE); continue; }
         m_log->abort("unrecognized mnemonic \"" + token + "\"");
     }
 }
