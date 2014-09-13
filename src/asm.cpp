@@ -28,16 +28,18 @@
 
 #include <vector>
 
-#include "translator.h"
-#include "scanner.h"
 #include "log.h"
 
-#include "a10/translator.h"
+#include "scanner.h"
 #include "a10/scanner.h"
 
+#include "translator.h"
+#include "a10/translator.h"
+#include "a11/translator.h"
+
 #define AASM_VERSION                "aasm v1.0"
-#define SUPPORTED_STANDARDS         { "a10", "" }
-#define DEFAULT_STANDARD            "a10"
+#define SUPPORTED_STANDARDS         { "a10", "a11", "" }
+#define DEFAULT_STANDARD            "a11"
 
 struct AssemblerJob
 {
@@ -219,6 +221,7 @@ int main(int argc, char** argv)
 
         Scanner* scanner = 0;
         if(job.standard == "a10") scanner = new ScannerA10(log, &in);
+        if(job.standard == "a11") scanner = new ScannerA10(log, &in);
 
         if(!scanner)
         {
@@ -228,6 +231,7 @@ int main(int argc, char** argv)
 
         Translator* translator = 0;
         if(job.standard == "a10") translator = new TranslatorA10(log, scanner, &out);
+        if(job.standard == "a11") translator = new TranslatorA11(log, scanner, &out);
 
         if(!translator)
         {
