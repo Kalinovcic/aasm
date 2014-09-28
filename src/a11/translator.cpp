@@ -37,6 +37,8 @@ void TranslatorA11::function()
         m_functionIDs[name] = nextFunctionID();
     else m_log->abort("function \"" + name + "\" redeclared");
 
+    if(name == "main") m_main = m_functionIDs[name];
+
     m_lvarMPosCounter = 0;
     m_lvarMPos.clear();
 
@@ -126,6 +128,8 @@ void TranslatorA11::writeFunctions()
 
         writeFunction(functions[i]);
     }
+
+    write(&m_main, 4);
 }
 
 void TranslatorA11::writeGlobalvarData()

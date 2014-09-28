@@ -57,6 +57,7 @@ private:
 
     u32 m_pc;
     u32 m_filepos;
+    u32 m_main;
 
     u32 m_functionIDCounter;
     u32 m_gvarMPosCounter;
