@@ -37,8 +37,8 @@ void TranslatorA11::function()
         m_functionIDs[name] = nextFunctionID();
     else m_log->abort("function \"" + name + "\" redeclared");
 
-    m_localvarIDCounter = 0;
-    m_localvarIDs.clear();
+    m_lvarMPosCounter = 0;
+    m_lvarMPos.clear();
 
     passFunction(name);
 }
@@ -61,8 +61,16 @@ void TranslatorA11::native()
 void TranslatorA11::globalvar()
 {
     m_scanner->nextTokenEOF();
+    std::string amltype = m_scanner->getToken();
+    u32 size = 0;
+    if(amltype == "i4") size = 4;
+    else if(amltype == "i8") size = 8;
+    else if(amltype == "f4") size = 4;
+    else if(amltype == "f8") size = 8;
+    else m_log->abort("invalid AML type " + amltype);
+    m_scanner->nextTokenEOF();
     std::string name = m_scanner->getToken();
-    globalvarIDFor(name, true);
+    gvarMPosFor(name, true, size);
 }
 
 void TranslatorA11::writeHeader()
@@ -75,62 +83,55 @@ void TranslatorA11::writeHeader()
     u16 version = 0;
     write(&version, 2);
 
-    m_filepos += 4;
+    m_filepos += 6;
 }
 
 void TranslatorA11::writeNativeData()
 {
-    u16 nativecount = m_nativeFunctions.size();
-    write(&nativecount, 2);
+    u32 nativecount = m_nativeFunctions.size();
+    write(&nativecount, 4);
+    m_filepos += 4;
 
-    m_filepos += 2;
-
+    std::vector<std::string> natives;
+    natives.resize(nativecount);
     for(std::vector<std::string>::iterator i = m_nativeFunctions.begin(); i != m_nativeFunctions.end(); i++)
-    {
-        std::string name = *i;
+        natives[functionIDFor(*i, false)] = *i;
 
+    for(u32 i = 0; i < nativecount; i++)
+    {
+        std::string name = natives[i];
         for(unsigned int i = 0; i < name.size(); i++)
             writeByte(name[i]);
         writeByte(0x00);
+        m_filepos += name.size();
+    }
+}
 
-        u16 id = functionIDFor(name, false);
-        write(&id, 2);
+void TranslatorA11::writeFunctions()
+{
+    u32 functionc = m_functionIDs.size();
+    write(&functionc, 4);
+    m_filepos += 4;
 
-        m_filepos += name.size() + 4;
+    std::vector<std::string> functions;
+    functions.resize(functionc);
+    for(std::map<std::string, FunctionData>::iterator i = m_functions.begin(); i != m_functions.end(); i++)
+        functions[functionIDFor(i->first, false)] = i->first;
+
+    for(u32 i = 0; i < functionc; i++)
+    {
+        u32 size = getFunctionSize(functions[i]);
+        write(&size, 4);
+        m_filepos += 4;
+
+        writeFunction(functions[i]);
     }
 }
 
 void TranslatorA11::writeGlobalvarData()
 {
-    u16 globalvarc = m_globalvarIDs.size();
-    write(&globalvarc, 2);
-
-    m_filepos += 2;
-}
-
-void TranslatorA11::writeFunctionData()
-{
-    u16 functionc = m_functionIDs.size();
-    write(&functionc, 2);
-
-    m_filepos += 2 + (functionc - m_nativeFunctions.size())* 6;
-
-    for(std::map<std::string, u32>::iterator i = m_functionIDs.begin(); i != m_functionIDs.end(); i++)
-        if(!isNative(i->first))
-        {
-            u16 id = i->second;
-
-            write(&id, 2);
-            write(&m_filepos, 4);
-            m_filepos += getFunctionSize(i->first);
-        }
-}
-
-void TranslatorA11::writeFunctions()
-{
-    for(std::map<std::string, u32>::iterator i = m_functionIDs.begin(); i != m_functionIDs.end(); i++)
-        if(!isNative(i->first))
-            writeFunction(i->first);
+    write(&m_gvarMPosCounter, 4);
+    m_filepos += 4;
 }
 
 void TranslatorA11::labelPass()
@@ -154,7 +155,6 @@ void TranslatorA11::translationPass()
 {
     writeHeader();
     writeNativeData();
-    writeGlobalvarData();
-    writeFunctionData();
     writeFunctions();
+    writeGlobalvarData();
 }

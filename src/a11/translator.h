@@ -41,8 +41,8 @@ public:
       m_pc(0),
       m_filepos(0),
       m_functionIDCounter(0),
-      m_globalvarIDCounter(0),
-      m_localvarIDCounter(0) {}
+      m_gvarMPosCounter(0),
+      m_lvarMPosCounter(0) {}
     ~TranslatorA11() {}
 
     void labelPass();
@@ -58,12 +58,12 @@ private:
     u32 m_pc;
     u32 m_filepos;
 
-    u16 m_functionIDCounter;
-    u16 m_globalvarIDCounter;
-    u16 m_localvarIDCounter;
+    u32 m_functionIDCounter;
+    u32 m_gvarMPosCounter;
+    u32 m_lvarMPosCounter;
     std::map<std::string, u32> m_functionIDs;
-    std::map<std::string, u32> m_globalvarIDs;
-    std::map<std::string, u32> m_localvarIDs;
+    std::map<std::string, u32> m_gvarMPos;
+    std::map<std::string, u32> m_lvarMPos;
 
     std::map<std::string, FunctionData> m_functions;
     std::vector<std::string> m_nativeFunctions;
@@ -71,25 +71,27 @@ private:
     inline void write(void* ptr, size_t size) { m_out->write(reinterpret_cast<const char*>(ptr), size); }
     inline void writeByte(u8 byte) { m_out->write(reinterpret_cast<const char*>(&byte), 1); }
 
-    inline u16 nextFunctionID()
+    inline u32 nextFunctionID()
     {
         m_functionIDCounter++;
         if(m_functionIDCounter == 0) m_log->abort("function ID overflow");
         return m_functionIDCounter - 1;
     }
 
-    inline u16 nextGlobalvarID()
+    inline u32 nextGVarMPos(u32 size)
     {
-        m_globalvarIDCounter++;
-        if(m_globalvarIDCounter == 0) m_log->abort("globalvar ID overflow");
-        return m_globalvarIDCounter - 1;
+        u32 old = m_gvarMPosCounter;
+        m_gvarMPosCounter += size;
+        if(m_gvarMPosCounter < old) m_log->abort("globalvar ID overflow");
+        return m_gvarMPosCounter - size;
     }
 
-    inline u16 nextLocalvarID()
+    inline u32 nextLVarMPos(u32 size)
     {
-        m_localvarIDCounter++;
-        if(m_localvarIDCounter == 0) m_log->abort("var ID overflow");
-        return m_localvarIDCounter - 1;
+        u32 old = m_lvarMPosCounter;
+        m_lvarMPosCounter += size;
+        if(m_lvarMPosCounter < old) m_log->abort("localvar ID overflow");
+        return m_lvarMPosCounter - size;
     }
 
     inline bool isNative(std::string name)
@@ -97,7 +99,7 @@ private:
         return std::find(m_nativeFunctions.begin(), m_nativeFunctions.end(), name) != m_nativeFunctions.end();
     }
 
-    inline u16 functionIDFor(std::string name, bool create)
+    inline u32 functionIDFor(std::string name, bool create)
     {
         if(m_functionIDs.find(name) == m_functionIDs.end())
         {
@@ -108,49 +110,24 @@ private:
         return m_functionIDs[name];
     }
 
-    inline u16 globalvarIDFor(std::string name, bool create)
+    inline u32 gvarMPosFor(std::string name, bool create, u32 size)
     {
-        if(m_globalvarIDs.find(name) == m_globalvarIDs.end())
+        if(m_gvarMPos.find(name) == m_gvarMPos.end())
         {
-            if(create) m_globalvarIDs[name] = nextFunctionID();
+            if(create) m_gvarMPos[name] = nextGVarMPos(size);
             else m_log->abort("globalvar \"" + name + "\" not found");
         }
-        return m_globalvarIDs[name];
+        return m_gvarMPos[name];
     }
 
-    inline u16 localvarIDFor(std::string name, bool create)
+    inline u32 lvarMPosFor(std::string name, bool create, u32 size)
     {
-        if(m_localvarIDs.find(name) == m_localvarIDs.end())
+        if(m_lvarMPos.find(name) == m_lvarMPos.end())
         {
-            if(create) m_localvarIDs[name] = nextFunctionID();
+            if(create) m_lvarMPos[name] = nextLVarMPos(size);
             else m_log->abort("var \"" + name + "\" not found");
         }
-        return m_localvarIDs[name];
-    }
-
-    inline bool isBoolean(std::string s)
-    {
-        return s == "true" || s == "false";
-    }
-
-    inline bool isInteger(std::string s)
-    {
-        for(unsigned int i = 0; i < s.size(); i++)
-            if(s[i] < '0' || s[i] > '9')
-                return false;
-        return true;
-    }
-
-    inline bool isFloat(std::string s)
-    {
-        bool decpoint = false;
-        for(unsigned int i = 0; i < s.size(); i++)
-            if(s[i] < '0' || s[i] > '9')
-            {
-                if(s[i] == '.' && !decpoint) decpoint = true;
-                else return false;
-            }
-        return true;
+        return m_lvarMPos[name];
     }
 
     void passFunction(std::string name);
@@ -164,9 +141,8 @@ private:
 
     void writeHeader();
     void writeNativeData();
-    void writeGlobalvarData();
-    void writeFunctionData();
     void writeFunctions();
+    void writeGlobalvarData();
 };
 
 #endif /* TRANSLATOR_A11_H_ */
