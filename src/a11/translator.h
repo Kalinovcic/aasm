@@ -42,6 +42,7 @@ public:
       m_filepos(0),
       m_main(0),
       m_functionIDCounter(0),
+      m_nativeIDCounter(0),
       m_gvarMPosCounter(0),
       m_lvarMPosCounter(0) {}
     ~TranslatorA11() {}
@@ -61,13 +62,15 @@ private:
     u32 m_main;
 
     u32 m_functionIDCounter;
+    u32 m_nativeIDCounter;
     u32 m_gvarMPosCounter;
     u32 m_lvarMPosCounter;
     std::map<std::string, u32> m_functionIDs;
+    std::map<std::string, u32> m_nativeIDs;
     std::map<std::string, u32> m_gvarMPos;
     std::map<std::string, u32> m_lvarMPos;
 
-    std::map<std::string, FunctionData> m_functions;
+    std::map<u32, FunctionData> m_functions;
     std::vector<std::string> m_nativeFunctions;
 
     inline void write(void* ptr, size_t size) { m_out->write(reinterpret_cast<const char*>(ptr), size); }
@@ -78,6 +81,13 @@ private:
         m_functionIDCounter++;
         if(m_functionIDCounter == 0) m_log->abort("function ID overflow");
         return m_functionIDCounter - 1;
+    }
+
+    inline u32 nextNativeID()
+    {
+        m_nativeIDCounter++;
+        if(m_nativeIDCounter == 0) m_log->abort("native ID overflow");
+        return m_nativeIDCounter - 1;
     }
 
     inline u32 nextGVarMPos(u32 size)
@@ -96,11 +106,6 @@ private:
         return m_lvarMPosCounter - size;
     }
 
-    inline bool isNative(std::string name)
-    {
-        return std::find(m_nativeFunctions.begin(), m_nativeFunctions.end(), name) != m_nativeFunctions.end();
-    }
-
     inline u32 functionIDFor(std::string name, bool create)
     {
         if(m_functionIDs.find(name) == m_functionIDs.end())
@@ -110,6 +115,17 @@ private:
         }
 
         return m_functionIDs[name];
+    }
+
+    inline u32 nativeIDFor(std::string name, bool create)
+    {
+        if(m_nativeIDs.find(name) == m_nativeIDs.end())
+        {
+            if(create) m_nativeIDs[name] = nextNativeID();
+            else m_log->abort("native \"" + name + "\" not found");
+        }
+
+        return m_nativeIDs[name];
     }
 
     inline u32 gvarMPosFor(std::string name, bool create, u32 size)
@@ -132,10 +148,10 @@ private:
         return m_lvarMPos[name];
     }
 
-    void passFunction(std::string name);
-    u32 getFunctionSize(std::string name);
-    u32 getLabelPC(std::string functionName, std::string labelName);
-    void writeFunction(std::string name);
+    void passFunction(u32 id);
+    u32 getFunctionSize(u32 id);
+    u32 getLabelPC(u32 id, std::string labelName);
+    void writeFunction(u32 id);
 
     void function();
     void native();

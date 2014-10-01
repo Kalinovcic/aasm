@@ -42,7 +42,7 @@ void TranslatorA11::function()
     m_lvarMPosCounter = 0;
     m_lvarMPos.clear();
 
-    passFunction(name);
+    passFunction(m_functionIDs[name]);
 }
 
 void TranslatorA11::native()
@@ -53,8 +53,8 @@ void TranslatorA11::native()
     m_scanner->nextTokenEOF();
     std::string name = m_scanner->getToken();
 
-    if(m_functionIDs.find(name) == m_functionIDs.end())
-        m_functionIDs[name] = nextFunctionID();
+    if(m_nativeIDs.find(name) == m_nativeIDs.end())
+        m_nativeIDs[name] = nextNativeID();
     else m_log->abort("native \"" + name + "\" redeclared");
 
     m_nativeFunctions.push_back(name);
@@ -90,18 +90,13 @@ void TranslatorA11::writeHeader()
 
 void TranslatorA11::writeNativeData()
 {
-    u32 nativecount = m_nativeFunctions.size();
+    u32 nativecount = m_nativeIDCounter;
     write(&nativecount, 4);
     m_filepos += 4;
 
-    std::vector<std::string> natives;
-    natives.resize(nativecount);
-    for(std::vector<std::string>::iterator i = m_nativeFunctions.begin(); i != m_nativeFunctions.end(); i++)
-        natives[functionIDFor(*i, false)] = *i;
-
     for(u32 i = 0; i < nativecount; i++)
     {
-        std::string name = natives[i];
+        std::string name = m_nativeFunctions[i];
         for(unsigned int i = 0; i < name.size(); i++)
             writeByte(name[i]);
         writeByte(0x00);
@@ -111,22 +106,16 @@ void TranslatorA11::writeNativeData()
 
 void TranslatorA11::writeFunctions()
 {
-    u32 functionc = m_functionIDs.size();
+    u32 functionc = m_functionIDCounter;
     write(&functionc, 4);
     m_filepos += 4;
 
-    std::vector<std::string> functions;
-    functions.resize(functionc);
-    for(std::map<std::string, FunctionData>::iterator i = m_functions.begin(); i != m_functions.end(); i++)
-        functions[functionIDFor(i->first, false)] = i->first;
-
     for(u32 i = 0; i < functionc; i++)
     {
-        u32 size = getFunctionSize(functions[i]);
+        u32 size = getFunctionSize(i);
         write(&size, 4);
         m_filepos += 4;
-
-        writeFunction(functions[i]);
+        writeFunction(i);
     }
 
     write(&m_main, 4);

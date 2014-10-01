@@ -122,6 +122,7 @@
 #define OP_GOTO         0xD0
 #define OP_CALL         0xD1
 #define OP_RETURN       0xD2
+#define OP_NATIVE       0xD3
 #define OP_IF           0xD4
 #define OP_IFN          0xD5
 #define OP_LTNL         0xDA
@@ -150,11 +151,11 @@
 #define OP_FUCMPR4      0xF1
 #define OP_FUCMPR8      0xF2
 
-void TranslatorA11::passFunction(std::string name)
+void TranslatorA11::passFunction(u32 id)
 {
     m_pc = 0;
-    m_functions[name].inpos = m_scanner->getIn()->tellg();
-    m_functions[name].labels.clear();
+    m_functions[id].inpos = m_scanner->getIn()->tellg();
+    m_functions[id].labels.clear();
 
     while(true)
     {
@@ -165,14 +166,14 @@ void TranslatorA11::passFunction(std::string name)
 
         if(token[token.size() - 1] == ':')
         {
-            m_functions[name].labels[token.substr(0, token.size() - 1)] = m_pc;
+            m_functions[id].labels[token.substr(0, token.size() - 1)] = m_pc;
             continue;
         }
 
         m_pc++;
         if(token == "load4" || token == "load8" || token == "fetch4" || token == "fetch8"
         || token == "loadwide4" || token == "loadwide8" || token == "fetchwide4" || token == "fetchwide8"
-        || token == "if" || token == "ifn" || token == "goto" || token == "call"
+        || token == "if" || token == "ifn" || token == "goto" || token == "call" || token == "native"
         || token == "pushi4" || token == "pushi8"|| token == "pushf4" || token == "pushf8")
         {
             m_pc += 4;
@@ -182,26 +183,26 @@ void TranslatorA11::passFunction(std::string name)
         }
     }
 
-    m_functions[name].size = m_pc;
+    m_functions[id].size = m_pc;
 }
 
-u32 TranslatorA11::getFunctionSize(std::string name)
+u32 TranslatorA11::getFunctionSize(u32 id)
 {
-    return m_functions[name].size;
+    return m_functions[id].size;
 }
 
-u32 TranslatorA11::getLabelPC(std::string functionName, std::string labelName)
+u32 TranslatorA11::getLabelPC(u32 id, std::string labelName)
 {
-    FunctionData fdat = m_functions[functionName];
+    FunctionData fdat = m_functions[id];
     if(fdat.labels.find(labelName) == fdat.labels.end())
         m_log->abort("label \"" + labelName + "\" not found");
     return fdat.labels[labelName];
 }
 #include <iostream>
 
-void TranslatorA11::writeFunction(std::string name)
+void TranslatorA11::writeFunction(u32 id)
 {
-    m_scanner->getIn()->seekg(m_functions[name].inpos);
+    m_scanner->getIn()->seekg(m_functions[id].inpos);
     while(true)
     {
         m_scanner->nextTokenEOF();
@@ -388,7 +389,7 @@ void TranslatorA11::writeFunction(std::string name)
         {
             writeByte(OP_GOTO);
             m_scanner->nextTokenEOF();
-            u32 pos = getLabelPC(name, m_scanner->getToken());
+            u32 pos = getLabelPC(id, m_scanner->getToken());
             write(&pos, 4);
             continue;
         }
@@ -396,7 +397,7 @@ void TranslatorA11::writeFunction(std::string name)
         {
             writeByte(OP_IF);
             m_scanner->nextTokenEOF();
-            u32 pos = getLabelPC(name, m_scanner->getToken());
+            u32 pos = getLabelPC(id, m_scanner->getToken());
             write(&pos, 4);
             continue;
         }
@@ -404,7 +405,7 @@ void TranslatorA11::writeFunction(std::string name)
         {
             writeByte(OP_IFN);
             m_scanner->nextTokenEOF();
-            u32 pos = getLabelPC(name, m_scanner->getToken());
+            u32 pos = getLabelPC(id, m_scanner->getToken());
             write(&pos, 4);
             continue;
         }
@@ -441,6 +442,14 @@ void TranslatorA11::writeFunction(std::string name)
             continue;
         }
         if(token == "return") { writeByte(OP_RETURN); continue; }
+        if(token == "native")
+        {
+            writeByte(OP_NATIVE);
+            m_scanner->nextTokenEOF();
+            u32 id = nativeIDFor(m_scanner->getToken(), false);
+            write(&id, 4);
+            continue;
+        }
         m_log->abort("unrecognized mnemonic \"" + token + "\"");
     }
 }
