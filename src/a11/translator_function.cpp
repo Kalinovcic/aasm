@@ -393,8 +393,22 @@ void TranslatorA11::writeFunction(std::string name)
             write(&pos, 4);
             continue;
         }
-        if(token == "if") { writeByte(OP_IF); continue; }
-        if(token == "ifn") { writeByte(OP_IFN); continue; }
+        if(token == "if")
+        {
+            writeByte(OP_IF);
+            m_scanner->nextTokenEOF();
+            u32 pos = getLabelPC(name, m_scanner->getToken());
+            write(&pos, 4);
+            continue;
+        }
+        if(token == "ifn")
+        {
+            writeByte(OP_IFN);
+            m_scanner->nextTokenEOF();
+            u32 pos = getLabelPC(name, m_scanner->getToken());
+            write(&pos, 4);
+            continue;
+        }
         if(token == "ltnl") { writeByte(OP_LTNL); continue; }
         if(token == "lenl") { writeByte(OP_LENL); continue; }
         if(token == "gtnl") { writeByte(OP_GTNL); continue; }
