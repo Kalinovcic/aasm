@@ -40,6 +40,7 @@ public:
     : Translator(log, scanner, out),
       m_pc(0),
       m_filepos(0),
+      m_main(0),
       m_functionIDCounter(0),
       m_gvarMPosCounter(0),
       m_lvarMPosCounter(0) {}

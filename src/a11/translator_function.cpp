@@ -223,7 +223,9 @@ void TranslatorA11::writeFunction(std::string name)
         {
             writeByte(OP_PUSH8);
             m_scanner->nextTokenEOF();
-            i64 value = std::atoll(m_scanner->getToken().c_str());
+            i64 value;
+            if(m_scanner->getToken()[0] == '@') value = lvarMPosFor(m_scanner->getToken().substr(1), false, 0);
+            else value = std::atoll(m_scanner->getToken().c_str());
             write(&value, 8);
             continue;
         }
