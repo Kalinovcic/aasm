@@ -37,6 +37,8 @@
 #define OP_FETCH8       0x19
 #define OP_FETCHWIDE4   0x1A
 #define OP_FETCHWIDE8   0x1B
+#define OP_VARPTR       0x1C
+#define OP_VARPTRWIDE   0x1D
 
 #define OP_ALLOC        0x20
 #define OP_FREE         0x21
@@ -174,7 +176,8 @@ void TranslatorA11::passFunction(u32 id)
         if(token == "load4" || token == "load8" || token == "fetch4" || token == "fetch8"
         || token == "loadwide4" || token == "loadwide8" || token == "fetchwide4" || token == "fetchwide8"
         || token == "if" || token == "ifn" || token == "goto" || token == "call" || token == "native"
-        || token == "pushi4" || token == "pushi8"|| token == "pushf4" || token == "pushf8")
+        || token == "pushi4" || token == "pushi8"|| token == "pushf4" || token == "pushf8"
+        || token == "varptr" || token == "varptrwide")
         {
             m_pc += 4;
             if(token == "pushi8" || token == "pushf8") m_pc += 4;
@@ -308,6 +311,22 @@ void TranslatorA11::writeFunction(u32 id)
             writeByte(OP_FETCHWIDE8);
             m_scanner->nextTokenEOF();
             u32 mpos = gvarMPosFor(m_scanner->getToken(), false, 8);
+            write(&mpos, 4);
+            continue;
+        }
+        if(token == "varptr")
+        {
+            writeByte(OP_VARPTR);
+            m_scanner->nextTokenEOF();
+            u32 mpos = lvarMPosFor(m_scanner->getToken(), false, 4);
+            write(&mpos, 4);
+            continue;
+        }
+        if(token == "varptrwide")
+        {
+            writeByte(OP_VARPTRWIDE);
+            m_scanner->nextTokenEOF();
+            u32 mpos = gvarMPosFor(m_scanner->getToken(), false, 4);
             write(&mpos, 4);
             continue;
         }
