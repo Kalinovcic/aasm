@@ -178,8 +178,7 @@ void TranslatorA11::passFunction(std::string name)
             m_pc += 4;
             if(token == "pushi8" || token == "pushf8") m_pc += 4;
 
-            if(!(token == "if" || token == "ifn"))
-                m_scanner->nextTokenEOF();
+            m_scanner->nextTokenEOF();
         }
     }
 
